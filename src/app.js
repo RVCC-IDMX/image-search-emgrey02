@@ -1,4 +1,9 @@
 const form = document.querySelector('.search-form');
+const clearButton = document.querySelector('.clear');
+let localStorage = window.localStorage;
+
+window.addEventListener('load', checkLocalStorage);
+clearButton.addEventListener('click', clearPage);
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -44,4 +49,27 @@ form.addEventListener('submit', async (event) => {
 
     container.appendChild(clone);
   }
+  populateStorage();
 });
+
+function populateStorage() {
+  localStorage.setItem('query', document.querySelector('#query').value);
+  localStorage.setItem(
+    'search results',
+    document.querySelector('.container').innerHTML
+  );
+  console.log(localStorage);
+}
+
+function checkLocalStorage() {
+  if (localStorage) {
+    document.querySelector('#query').value = localStorage.getItem('query');
+    document.querySelector('.container').innerHTML =
+      localStorage.getItem('search results');
+  }
+}
+
+function clearPage() {
+  localStorage.clear();
+  location.reload();
+}
