@@ -1,12 +1,23 @@
 const form = document.querySelector('.search-form');
+const container = document.querySelector('.container');
 const clearButton = document.querySelector('.clear');
-let localStorage = window.localStorage;
+const modal = document.querySelector('#modal');
+const closeBtn = document.querySelector('#close-btn');
+const modalContent = document.querySelector('#modal-content');
+const localStorage = window.localStorage;
+let cardData;
+
+checkLocalStorage();
 
 window.addEventListener('load', checkLocalStorage);
 clearButton.addEventListener('click', clearPage);
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+
+  if (container.innerHTML != '') {
+    container.innerHTML = '';
+  }
 
   const formData = new FormData(event.target);
 
@@ -22,7 +33,6 @@ form.addEventListener('submit', async (event) => {
     .catch((err) => console.error(err));
 
   const post = document.querySelector('#template');
-  const container = document.querySelector('.container');
 
   if (response.results < 10 || !response.results) {
     throw Error('error in results array');
@@ -34,11 +44,14 @@ form.addEventListener('submit', async (event) => {
     const postImg = clone.querySelector('.post__img');
     const author = clone.querySelector('.post__user');
     const desc = clone.querySelector('.post__desc');
+    const card = clone.querySelector('.card');
 
+    card.dataset.key = `${i}`;
     postImg.src = dataObj.urls.small;
     postImg.alt = dataObj.alt_description;
 
     author.textContent = dataObj.user.name;
+
     if (dataObj.description) {
       if (dataObj.description.length > 100) {
         desc.textContent = `${dataObj.description.slice(0, 100)}...`;
@@ -46,19 +59,19 @@ form.addEventListener('submit', async (event) => {
         desc.textContent = dataObj.description;
       }
     }
-
     container.appendChild(clone);
   }
-  populateStorage();
+  initiateModal(response.results);
+  populateStorage(response.results);
 });
 
-function populateStorage() {
+function populateStorage(searchQuery) {
   localStorage.setItem('query', document.querySelector('#query').value);
   localStorage.setItem(
     'search results',
     document.querySelector('.container').innerHTML
   );
-  console.log(localStorage);
+  localStorage.setItem('search query', JSON.stringify(searchQuery));
 }
 
 function checkLocalStorage() {
@@ -66,10 +79,37 @@ function checkLocalStorage() {
     document.querySelector('#query').value = localStorage.getItem('query');
     document.querySelector('.container').innerHTML =
       localStorage.getItem('search results');
+
+    searchResults = JSON.parse(localStorage.getItem('search query'));
+    initiateModal(searchResults);
   }
 }
 
 function clearPage() {
   localStorage.clear();
   location.reload();
+}
+
+closeBtn.addEventListener('click', (event) => {
+  modal.classList.remove('open');
+});
+
+function initiateModal(imageInfo) {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach((card) =>
+    card.addEventListener('click', () => {
+      cardData = imageInfo[card.dataset.key];
+      const modalImg = modalContent.querySelector('.modal__img');
+      const modalAuthor = modalContent.querySelector('.modal__user');
+      const modalDesc = modalContent.querySelector('.modal__desc');
+
+      modalImg.src = cardData.urls.regular;
+      modalImg.alt = cardData.alt_description;
+      modalAuthor.textContent = cardData.user.name;
+      if (cardData.description) {
+        modalDesc.textContent = cardData.description;
+      }
+      modal.classList.add('open');
+    })
+  );
 }
